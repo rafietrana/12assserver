@@ -88,18 +88,70 @@ async function run() {
       const testData = req.body;
       const result = await testCollection.insertOne(testData);
       res.send(result);
-
     });
 
     // get all test
-    app.get('/getalltest', async(req, res)=>{
-            const result = await testCollection.find().toArray()
-            res.send(result)
+    app.get("/getalltest", async (req, res) => {
+      const result = await testCollection.find().toArray();
+      res.send(result);
+    });
+    // gettest data
+    app.get("/gettest/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await testCollection.findOne(query);
+      res.send(result);
+    });
 
-    })
+    // update test  single data
 
+    app.patch("/updatetest/:id", async (req, res) => {
+      console.log("update method is now hitting");
+      const id = req.params.id;
+      const updateTestInfo = req.body;
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          testname: updateTestInfo.testname,
+          testdetails: updateTestInfo.testdetails,
+          testprice: updateTestInfo.testprice,
+          bannerimg: updateTestInfo.bannerimg,
+          slotsnumber: updateTestInfo.slotsnumber,
+          date: updateTestInfo.date,
+        },
+      };
 
+      const result = await testCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    });
 
+    app.get("/gettestall", async (req, res) => {
+      try {
+      
+
+  
+          const today = new Date();
+           const previousDate =   today.setDate(today.getDate() - 1);
+           const newISODate = new Date(previousDate).toISOString();
+ 
+
+        const data = await testCollection
+          .find({ "date": { "$gte": newISODate } })
+          .toArray();
+
+        res.send(data);
+      } catch (error) {
+        res.status(500).send(error.toString());
+      }
+    });
+
+    //delete test data
+    app.delete("/deletetest/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await testCollection.deleteOne(query);
+      res.send(result);
+    });
 
     await client.db("admin").command({ ping: 1 });
     console.log(
