@@ -2,6 +2,7 @@ const express = require("express");
 const app = express();
 const cors = require("cors");
 require("dotenv").config();
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY)
 const port = process.env.PORT || 5000;
 
 // middleware
@@ -152,6 +153,29 @@ async function run() {
       const result = await testCollection.deleteOne(query);
       res.send(result);
     });
+
+
+    // alhamdulillah payment intent start
+    app.post('/create-payment-intent',  async (req, res) => {
+      const price = req.body.price
+      const priceInCent = parseFloat(price) * 100
+      if (!price || priceInCent < 1) return
+      
+      const { client_secret } = await stripe.paymentIntents.create({
+        amount: priceInCent,
+        currency: 'usd',
+ 
+        automatic_payment_methods: {
+          enabled: true,
+        },
+      })
+      // send client secret as response
+      res.send({ clientSecret: client_secret })
+    })
+
+
+
+    
 
     await client.db("admin").command({ ping: 1 });
     console.log(
