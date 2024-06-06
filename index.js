@@ -165,6 +165,43 @@ async function run() {
       res.send(result)
     })
 
+    // add new key
+    app.patch('/updateField/:id', async (req, res) => {
+      const { id } = req.params;
+      const { link} = req.body;
+    
+    
+      try {
+   
+        const updateResult = await  reserveCollcetion.updateOne(
+          { _id: new ObjectId(id) },
+          { $set: { testResult: link } }
+        );
+    
+        if (updateResult.matchedCount === 0) {
+          return res.status(404).send(' i not found your documnet ');
+        }
+    
+        if (updateResult.modifiedCount > 0) {
+    
+          const statusUpdateResult = await  reserveCollcetion.updateOne(
+            { _id: new ObjectId(id) },
+            { $set: { reportStatus: 'delivered' } }
+          );
+    
+          if (statusUpdateResult.modifiedCount > 0) {
+            return res.status(200).send('alhamdulillah feild and report status updated successfully ');
+          } else {
+            return res.status(500).send('Field added but report status update failed');
+          }
+        } else {
+          return res.status(500).send('Field addition failed');
+        }
+      } catch (err) {
+        console.error('Error updating document', err);
+        res.status(500).send('Internal Server Error');
+      }
+    });
     // delete reseve data
     app.delete('/deletereseve/:id', async(req, res)=>{
            const id = req.params.id;
