@@ -158,6 +158,21 @@ async function run() {
       res.send(result);
     });
 
+
+    // get reserve data
+    app.get('/getreserve', async(req, res)=>{
+      const result = await  reserveCollcetion.find().toArray()
+      res.send(result)
+    })
+
+    // delete reseve data
+    app.delete('/deletereseve/:id', async(req, res)=>{
+           const id = req.params.id;
+           const query = {_id: new ObjectId(id)}
+           const result =await  reserveCollcetion.deleteOne(query)
+           res.send(result)
+    })
+
     // alhamdulillah payment intent start
     app.post("/create-payment-intent", async (req, res) => {
       const price = req.body.price;
