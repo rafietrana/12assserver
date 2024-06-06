@@ -2,7 +2,7 @@ const express = require("express");
 const app = express();
 const cors = require("cors");
 require("dotenv").config();
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY)
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const port = process.env.PORT || 5000;
 
 // middleware
@@ -25,6 +25,7 @@ async function run() {
     await client.connect();
     const bannerCollection = client.db("LastDB").collection("banners");
     const testCollection = client.db("LastDB").collection("tests");
+    const reserveCollcetion = client.db("LastDB").collection("reserve");
 
     app.post("/setbanner", async (req, res) => {
       const bannerData = req.body;
@@ -128,16 +129,12 @@ async function run() {
 
     app.get("/gettestall", async (req, res) => {
       try {
-      
-
-  
-          const today = new Date();
-           const previousDate =   today.setDate(today.getDate() - 1);
-           const newISODate = new Date(previousDate).toISOString();
- 
+        const today = new Date();
+        const previousDate = today.setDate(today.getDate() - 1);
+        const newISODate = new Date(previousDate).toISOString();
 
         const data = await testCollection
-          .find({ "date": { "$gte": newISODate } })
+          .find({ date: { $gte: newISODate } })
           .toArray();
 
         res.send(data);
@@ -154,28 +151,43 @@ async function run() {
       res.send(result);
     });
 
+    // post reserve data
+    app.post("/reservepost", async (req, res) => {
+      const reservedata = req.body;
+      const result = await reserveCollcetion.insertOne(reservedata);
+      res.send(result);
+    });
 
     // alhamdulillah payment intent start
-    app.post('/create-payment-intent',  async (req, res) => {
-      const price = req.body.price
-      const priceInCent = parseFloat(price) * 100
-      if (!price || priceInCent < 1) return
-      
+    app.post("/create-payment-intent", async (req, res) => {
+      const price = req.body.price;
+      const priceInCent = parseFloat(price) * 100;
+      if (!price || priceInCent < 1) return;
+
       const { client_secret } = await stripe.paymentIntents.create({
         amount: priceInCent,
-        currency: 'usd',
- 
+        currency: "usd",
+
         automatic_payment_methods: {
           enabled: true,
         },
-      })
+      });
       // send client secret as response
-      res.send({ clientSecret: client_secret })
-    })
+      res.send({ clientSecret: client_secret });
+    });
 
+    // decrement any data this is very importent
 
+    app.put("/decrementslots/:id", async (req, res) => {
+      const id = req.params.id;
 
-    
+      const result = await testCollection.findOneAndUpdate(
+        { _id: new ObjectId(id) },
+        { $inc: { slotsnumber: -1 } }
+      );
+      res.send(result);
+    });
+    // post reserve data
 
     await client.db("admin").command({ ping: 1 });
     console.log(
