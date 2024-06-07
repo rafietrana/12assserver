@@ -132,10 +132,16 @@ async function run() {
         const today = new Date();
         const previousDate = today.setDate(today.getDate() - 1);
         const newISODate = new Date(previousDate).toISOString();
+        const date = req.query.date;
+        console.log("alhamdulillah date is", date);
 
-        const data = await testCollection
-          .find({ date: { $gte: newISODate } })
-          .toArray();
+        let query = {
+          date: { $gte: newISODate },
+        };
+        if (date) {
+          query.date = date;
+        }
+        const data = await testCollection.find({}).toArray();
 
         res.send(data);
       } catch (error) {
@@ -158,57 +164,59 @@ async function run() {
       res.send(result);
     });
 
-
     // get reserve data
-    app.get('/getreserve', async(req, res)=>{
-      const result = await  reserveCollcetion.find().toArray()
-      res.send(result)
-    })
+    app.get("/getreserve", async (req, res) => {
+      const result = await reserveCollcetion.find().toArray();
+      res.send(result);
+    });
 
     // add new key
-    app.patch('/updateField/:id', async (req, res) => {
+    app.patch("/updateField/:id", async (req, res) => {
       const { id } = req.params;
-      const { link} = req.body;
-    
-    
+      const { link } = req.body;
+
       try {
-   
-        const updateResult = await  reserveCollcetion.updateOne(
+        const updateResult = await reserveCollcetion.updateOne(
           { _id: new ObjectId(id) },
           { $set: { testResult: link } }
         );
-    
+
         if (updateResult.matchedCount === 0) {
-          return res.status(404).send(' i not found your documnet ');
+          return res.status(404).send(" i not found your documnet ");
         }
-    
+
         if (updateResult.modifiedCount > 0) {
-    
-          const statusUpdateResult = await  reserveCollcetion.updateOne(
+          const statusUpdateResult = await reserveCollcetion.updateOne(
             { _id: new ObjectId(id) },
-            { $set: { reportStatus: 'delivered' } }
+            { $set: { reportStatus: "delivered" } }
           );
-    
+
           if (statusUpdateResult.modifiedCount > 0) {
-            return res.status(200).send('alhamdulillah feild and report status updated successfully ');
+            return res
+              .status(200)
+              .send(
+                "alhamdulillah feild and report status updated successfully "
+              );
           } else {
-            return res.status(500).send('Field added but report status update failed');
+            return res
+              .status(500)
+              .send("Field added but report status update failed");
           }
         } else {
-          return res.status(500).send('Field addition failed');
+          return res.status(500).send("Field addition failed");
         }
       } catch (err) {
-        console.error('Error updating document', err);
-        res.status(500).send('Internal Server Error');
+        console.error("Error updating document", err);
+        res.status(500).send("Internal Server Error");
       }
     });
     // delete reseve data
-    app.delete('/deletereseve/:id', async(req, res)=>{
-           const id = req.params.id;
-           const query = {_id: new ObjectId(id)}
-           const result =await  reserveCollcetion.deleteOne(query)
-           res.send(result)
-    })
+    app.delete("/deletereseve/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await reserveCollcetion.deleteOne(query);
+      res.send(result);
+    });
 
     // alhamdulillah payment intent start
     app.post("/create-payment-intent", async (req, res) => {
@@ -239,6 +247,14 @@ async function run() {
       );
       res.send(result);
     });
+    // app get
+    app.get("/serchbydate", async (req, res) => {
+      const date = req.body;
+      const query = { date: date };
+      const result = await reserveCollcetion.find(query).toArray();
+      res.send(result);
+    });
+
     // post reserve data
 
     await client.db("admin").command({ ping: 1 });
