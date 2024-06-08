@@ -265,6 +265,15 @@ async function run() {
       );
       res.send(result);
     });
+    // increment 
+    app.put('/incrementcount/:id', async(req, res)=>{
+         const id = req.params.id;
+         const result = await testCollection.findOneAndUpdate(
+             {_id: new ObjectId(id)},
+             {$inc:{count: 1}}
+         )
+         res.send(result)
+    })
     // app get
     app.get("/serchbydate", async (req, res) => {
       const date = req.body;
@@ -272,6 +281,11 @@ async function run() {
       const result = await reserveCollcetion.find(query).toArray();
       res.send(result);
     });
+
+
+
+  // increment Count
+  app.put("/incrementcount")
 
     // get user uppcomming appoinment data
 
@@ -314,6 +328,17 @@ async function run() {
       const result = await userCollection.updateOne(filter, updateDoc);
       res.send(result);
     });
+
+
+
+    // get sort fetured date 
+    app.get('/getsortfeturedid', async(req, res)=>{
+          const items = await testCollection.find({count: {$gt: 0}}).toArray()
+          const sortedItems = items.sort((a, b) => b.count - a.count);
+          res.send(sortedItems)
+        
+
+    })
 
     await client.db("admin").command({ ping: 1 });
     console.log(
