@@ -138,8 +138,8 @@ async function run() {
     app.get("/gettestall", async (req, res) => {
       try {
         const today = new Date();
-        const previousDate = today.setDate(today.getDate() - 1);
-        const newISODate = new Date(previousDate).toISOString();
+        // const previousDate = today.setDate(today.getDate() - 1);
+        const newISODate = new Date(today).toISOString();
 
         let query = {
           date: { $gte: newISODate },
@@ -153,54 +153,14 @@ async function run() {
       }
     });
 
-    // // test fillter query
-    // app.get('/datequery', async(req, res)=>{
-
-    //   const {date} =  req.query;
-    //     console.log('alhamdulillah date value is', date);
-    //   const query = {date: date};
-    //   const result = await testCollection.find(query).toArray()
-    //   res.send(result)
-
-    // })
-
     app.get("/datequery", async (req, res) => {
-      try {
-        const isoDateString = req.query.date;
-    
-        if (!isoDateString) {
-          return res
-            .status(400)
-            .send({ error: "Date query parameter is required; this is very important" });
-        }
-    
-        // Extract the date part
-        const datePart = isoDateString.substring(0, 10); // "YYYY-MM-DD"
-    
-        // Create start and end of the day
-        const startOfDay = new Date(datePart);
-        const endOfDay = new Date(new Date(datePart).setDate(new Date(datePart).getDate() + 1));
-    
-        // Create the query to cover the entire day
-        const query = {
-          date: {
-            $gte: startOfDay,
-            $lt: endOfDay
-          }
-        };
-    
-        // Use the query to find matching documents
-        const result = await testCollection.find(query).toArray();
-    
-        res.send(result);
-      } catch (error) {
-        console.error(error);
-        res
-          .status(500)
-          .send({ error: "An error occurred while processing your request" });
-      }
+              const result = await testCollection.find().toArray();
+              res.send(result)
     });
-    
+
+ 
+ 
+  
 
     //delete test data
     app.delete("/deletetest/:id", async (req, res) => {
