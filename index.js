@@ -26,6 +26,7 @@ async function run() {
     const bannerCollection = client.db("LastDB").collection("banners");
     const testCollection = client.db("LastDB").collection("tests");
     const reserveCollcetion = client.db("LastDB").collection("reserve");
+    const userCollection = client.db("LastDB").collection("users");
 
     app.post("/setbanner", async (req, res) => {
       const bannerData = req.body;
@@ -154,13 +155,9 @@ async function run() {
     });
 
     app.get("/datequery", async (req, res) => {
-              const result = await testCollection.find().toArray();
-              res.send(result)
+      const result = await testCollection.find().toArray();
+      res.send(result);
     });
-
- 
- 
-  
 
     //delete test data
     app.delete("/deletetest/:id", async (req, res) => {
@@ -183,13 +180,13 @@ async function run() {
       res.send(result);
     });
 
-    // getusertestresutl 
-    app.get('/getusertestresult/:email', async(req, res)=>{
-            const email= req.params.email;
-            const query = {userEmail: email};
-            const result = await reserveCollcetion.find(query).toArray()
-            res.send(result)
-    })
+    // getusertestresutl
+    app.get("/getusertestresult/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { userEmail: email };
+      const result = await reserveCollcetion.find(query).toArray();
+      res.send(result);
+    });
 
     // add new key
     app.patch("/updateField/:id", async (req, res) => {
@@ -285,7 +282,38 @@ async function run() {
       res.send(result);
     });
 
-    // post reserve data
+    // post userinforamtion
+
+    app.post("/postuserinfo", async (req, res) => {
+      const singupInfo = req.body;
+      const result = await userCollection.insertOne(singupInfo);
+      res.send(result);
+    });
+    // getuserinformation
+    app.get("/getuserinfo/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      const result = await userCollection.findOne(query);
+      res.send(result);
+    });
+    // UpdateUserInfomation
+    app.put("/updateuserinfo/:id", async (req, res) => {
+      const id = req.params.id;
+      const userData = req.body;
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          name: userData.name,
+          Image: userData.image,
+          upozilla: userData.upozilla,
+          district: userData.district,
+          bloodGroup: userData.bloodGroup,
+          district: userData.district,
+        },
+      };
+      const result = await userCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    });
 
     await client.db("admin").command({ ping: 1 });
     console.log(
