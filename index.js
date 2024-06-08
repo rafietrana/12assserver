@@ -183,6 +183,14 @@ async function run() {
       res.send(result);
     });
 
+    // getusertestresutl 
+    app.get('/getusertestresult/:email', async(req, res)=>{
+            const email= req.params.email;
+            const query = {userEmail: email};
+            const result = await reserveCollcetion.find(query).toArray()
+            res.send(result)
+    })
+
     // add new key
     app.patch("/updateField/:id", async (req, res) => {
       const { id } = req.params;
