@@ -132,7 +132,7 @@ async function run() {
     app.delete("/deleteuserappoinment/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
-      const result = await reserveCollcetion.deleteMany(query);
+      const result = await reserveCollcetion.deleteOne(query);
       res.send(result);
     });
 
@@ -265,15 +265,15 @@ async function run() {
       );
       res.send(result);
     });
-    // increment 
-    app.put('/incrementcount/:id', async(req, res)=>{
-         const id = req.params.id;
-         const result = await testCollection.findOneAndUpdate(
-             {_id: new ObjectId(id)},
-             {$inc:{count: 1}}
-         )
-         res.send(result)
-    })
+    // increment
+    app.put("/incrementcount/:id", async (req, res) => {
+      const id = req.params.id;
+      const result = await testCollection.findOneAndUpdate(
+        { _id: new ObjectId(id) },
+        { $inc: { count: 1 } }
+      );
+      res.send(result);
+    });
     // app get
     app.get("/serchbydate", async (req, res) => {
       const date = req.body;
@@ -282,10 +282,8 @@ async function run() {
       res.send(result);
     });
 
-
-
-  // increment Count
-  app.put("/incrementcount")
+    // increment Count
+    app.put("/incrementcount");
 
     // get user uppcomming appoinment data
 
@@ -329,30 +327,69 @@ async function run() {
       res.send(result);
     });
 
-
-
-    // get sort fetured date 
-    app.get('/getsortfeturedid', async(req, res)=>{
-          const items = await testCollection.find({count: {$gt: 0}}).toArray()
-          const sortedItems = items.sort((a, b) => b.count - a.count);
-          res.send(sortedItems)
-        
-
-    })
-
+    // get sort fetured date
+    app.get("/getsortfeturedid", async (req, res) => {
+      const items = await testCollection.find({ count: { $gt: 0 } }).toArray();
+      const sortedItems = items.sort((a, b) => b.count - a.count);
+      res.send(sortedItems);
+    });
 
     // getalluser
-    app.get('/getalluser', async (req, res) =>{
-      const result =await userCollection.find().toArray()
-      res.send(result)
-    })
+    app.get("/getalluser", async (req, res) => {
+      const result = await userCollection.find().toArray();
+      res.send(result);
+    });
     // get single user
 
-    app.get('/getsingleuser/:id', async(req, res)=>{
-           const  id = req.params.id;
-           const query = {_id: new ObjectId(id)};
-           const result =await userCollection.findOne(query)
-           res.send(result)
+    app.get("/getsingleuser/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await userCollection.findOne(query);
+      res.send(result);
+    });
+
+    // blocked user
+    app.put("/blockuser/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const result = await userCollection.updateOne(filter, {
+        $set: { userStatus: "blocked" },
+      });
+      res.send(result);
+    });
+    // blocked user
+    app.put("/unBlockuser/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const result = await userCollection.updateOne(filter, {
+        $set: { userStatus: "active" },
+      });
+      res.send(result);
+    });
+
+    app.get("/userdetails/:userId", async (req, res) => {
+      const id = req.params.userId;
+      const query = { _id: new ObjectId(id) };
+      const result = await userCollection.findOne(query);
+      res.send(result);
+    });
+    // gettestdata
+    app.get("/testdetails/:email", async(req, res)=>{
+      const email = req.params.email;
+      const query = {userEmail: email};
+      const result =await reserveCollcetion.find(query).toArray()
+      res.send(result)
+    })
+
+    // serchreservation by email
+
+
+    app.get("/searchbyemail/:email",async(req, res)=>{
+      const email = req.params.email;
+        const query = {userEmail: email}
+        const result =await  reserveCollcetion.find(query).toArray();
+        res.send(result)
+      
     })
 
     await client.db("admin").command({ ping: 1 });
