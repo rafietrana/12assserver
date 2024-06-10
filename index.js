@@ -1,6 +1,7 @@
 const express = require("express");
 const app = express();
 const cors = require("cors");
+var jwt = require("jsonwebtoken");
 require("dotenv").config();
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const port = process.env.PORT || 5000;
@@ -27,6 +28,39 @@ async function run() {
     const testCollection = client.db("LastDB").collection("tests");
     const reserveCollcetion = client.db("LastDB").collection("reserve");
     const userCollection = client.db("LastDB").collection("users");
+    // jwt start
+    app.post("/jwt", async (req, res) => {
+      const user = req.body;
+      const token = jwt.sign(user, process.env.ACCES_TOKEN_SECRET, {
+        expiresIn: "1h",
+      });
+      res.send({ token });
+    });
+
+    // this is middleware
+
+    const verifyToken = (req, res, next) => {
+      console.log("alhamdulillah token is", req.headers);
+      if (!req.headers.authorization) {
+        return res.status(401).send({ message: "forbidden access" });
+      }
+
+      const toekenId = req.headers.authorization.split(" ")[1];
+      jwt.verify(toekenId, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+        if (err) {
+          return res.status(401).send({ message: "forbidden access" });
+        }
+        req.decoded = decoded;
+        next();
+      });
+    };
+    const verifyEmail = (req, res, next) => {
+      const email = req.params.email || req.body.email;
+      if (req.decoded.email !== email) {
+        return res.status(403).send({ message: "Forbidden access" });
+      }
+      next();
+    };
 
     app.post("/setbanner", async (req, res) => {
       const bannerData = req.body;
@@ -302,12 +336,17 @@ async function run() {
       res.send(result);
     });
     // getuserinformation
-    app.get("/getuserinfo/:email", async (req, res) => {
-      const email = req.params.email;
-      const query = { email: email };
-      const result = await userCollection.findOne(query);
-      res.send(result);
-    });
+    app.get(
+      "/getuserinfo/:email",
+      verifyToken,
+      verifyEmail,
+      async (req, res) => {
+        const email = req.params.email;
+        const query = { email: email };
+        const result = await userCollection.findOne(query);
+        res.send(result);
+      }
+    );
     // UpdateUserInfomation
     app.put("/updateuserinfo/:id", async (req, res) => {
       const id = req.params.id;
@@ -390,13 +429,11 @@ async function run() {
       res.send(result);
     });
     // Check user admin
-    app.get("/users/admin/:email",  async (req, res) => {
+    app.get("/users/admin/:email", async (req, res) => {
       const email = req.params.email;
-  
 
       const query = { email: email };
       const user = await userCollection.findOne(query);
- 
 
       let admin = false;
 
@@ -404,43 +441,31 @@ async function run() {
         admin = true;
       }
 
-      
- 
-
       res.send({ admin });
     });
 
-
-
-    app.get("/getloginuser/:email",  async (req, res) => {
+    app.get("/getloginuser/:email", async (req, res) => {
       const email = req.params.email;
-  
 
       const query = { email: email };
-      const result = await userCollection.findOne(query)
-      res.send(result)
-         
+      const result = await userCollection.findOne(query);
+      res.send(result);
     });
     // Pagination
 
-app.get('/productscount', async (req, res)=>{
-  const count = await testCollection.estimatedDocumentCount()
-  res.send({count})
-})
+    app.get("/productscount", async (req, res) => {
+      const count = await testCollection.estimatedDocumentCount();
+      res.send({ count });
+    });
 
-
-    app.patch('/makeadmin/:id', async(req, res)=>{
+    app.patch("/makeadmin/:id", async (req, res) => {
       const id = req.params.id;
-      const fillter = {_id: new ObjectId(id)}
-      const result = await  userCollection.updateOne(fillter, {$set:{role: "admin"}})
-      res.send(result)
-    })
-
-
-
-
-
-
+      const fillter = { _id: new ObjectId(id) };
+      const result = await userCollection.updateOne(fillter, {
+        $set: { role: "admin" },
+      });
+      res.send(result);
+    });
 
     await client.db("admin").command({ ping: 1 });
     console.log(
