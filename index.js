@@ -396,14 +396,16 @@ async function run() {
 
       const query = { email: email };
       const user = await userCollection.findOne(query);
-      console.log("data from tanstack", user);
+ 
 
       let admin = false;
 
       if (user && user?.role === "admin") {
         admin = true;
       }
-      console.log("admin from server", admin);
+
+      
+ 
 
       res.send({ admin });
     });
