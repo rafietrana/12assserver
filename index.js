@@ -427,6 +427,7 @@ async function run() {
       const result = await  userCollection.updateOne(fillter, {$set:{role: "admin"}})
       res.send(result)
     })
+// static page
 
 
     await client.db("admin").command({ ping: 1 });
