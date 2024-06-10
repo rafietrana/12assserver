@@ -374,23 +374,60 @@ async function run() {
       res.send(result);
     });
     // gettestdata
-    app.get("/testdetails/:email", async(req, res)=>{
+    app.get("/testdetails/:email", async (req, res) => {
       const email = req.params.email;
-      const query = {userEmail: email};
-      const result =await reserveCollcetion.find(query).toArray()
-      res.send(result)
-    })
+      const query = { userEmail: email };
+      const result = await reserveCollcetion.find(query).toArray();
+      res.send(result);
+    });
 
     // serchreservation by email
 
-
-    app.get("/searchbyemail/:email",async(req, res)=>{
+    app.get("/searchbyemail/:email", async (req, res) => {
       const email = req.params.email;
-        const query = {userEmail: email}
-        const result =await  reserveCollcetion.find(query).toArray();
-        res.send(result)
-      
+      const query = { userEmail: email };
+      const result = await reserveCollcetion.find(query).toArray();
+      res.send(result);
+    });
+    // Check user admin
+    app.get("/users/admin/:email",  async (req, res) => {
+      const email = req.params.email;
+  
+
+      const query = { email: email };
+      const user = await userCollection.findOne(query);
+      console.log("data from tanstack", user);
+
+      let admin = false;
+
+      if (user && user?.role === "admin") {
+        admin = true;
+      }
+      console.log("admin from server", admin);
+
+      res.send({ admin });
+    });
+
+
+
+    app.get("/getloginuser/:email",  async (req, res) => {
+      const email = req.params.email;
+  
+
+      const query = { email: email };
+      const result = await userCollection.findOne(query)
+      res.send(result)
+         
+    });
+
+
+    app.patch('/makeadmin/:id', async(req, res)=>{
+      const id = req.params.id;
+      const fillter = {_id: new ObjectId(id)}
+      const result = await  userCollection.updateOne(fillter, {$set:{role: "admin"}})
+      res.send(result)
     })
+
 
     await client.db("admin").command({ ping: 1 });
     console.log(
