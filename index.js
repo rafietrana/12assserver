@@ -138,17 +138,17 @@ async function run() {
 
     app.get("/gettestall", async (req, res) => {
       try {
-        const today = new Date();
-        // const previousDate = today.setDate(today.getDate() - 1);
-        const newISODate = new Date(today).toISOString();
+        const page = parseInt(req.query.page) || 0;
+        const size = parseInt(req.query.size) || 2;
 
-        let query = {
-          date: { $gte: newISODate },
-        };
+        const totalDocuments = await testCollection.countDocuments();
+        const tests = await testCollection
+          .find()
+          .skip(page * size)
+          .limit(size)
+          .toArray();
 
-        const result = await testCollection.find(query).toArray();
-
-        res.send(result);
+        res.send({ totalDocuments, tests });
       } catch (error) {
         res.status(500).send(error.toString());
       }
@@ -419,6 +419,12 @@ async function run() {
       res.send(result)
          
     });
+    // Pagination
+
+app.get('/productscount', async (req, res)=>{
+  const count = await testCollection.estimatedDocumentCount()
+  res.send({count})
+})
 
 
     app.patch('/makeadmin/:id', async(req, res)=>{
@@ -427,7 +433,11 @@ async function run() {
       const result = await  userCollection.updateOne(fillter, {$set:{role: "admin"}})
       res.send(result)
     })
-// static page
+
+
+
+
+
 
 
     await client.db("admin").command({ ping: 1 });
