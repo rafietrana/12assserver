@@ -6,7 +6,7 @@ require("dotenv").config();
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const port = process.env.PORT || 5000;
 
-// middleware
+
 app.use(
   cors({
     origin: [
@@ -31,7 +31,7 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
-    // await client.connect();
+ 
     const bannerCollection = client.db("LastDB").collection("banners");
     const testCollection = client.db("LastDB").collection("tests");
     const reserveCollcetion = client.db("LastDB").collection("reserve");
@@ -48,7 +48,7 @@ async function run() {
     // this is middleware
 
     const verifyToken = (req, res, next) => {
-      // console.log("alhamdulillah token is", req.headers.authorization);
+    
       if (!req.headers.authorization) {
         return res
           .status(401)
@@ -68,13 +68,12 @@ async function run() {
     };
     const verifyEmail = (req, res, next) => {
       const email = req.params.email || req.body.email || req.query.email;
-      // console.log("alhamdulillah decoded email is", req.decoded.email);
-      // console.log("alhamdulillah user email is", email);
-      if (req.decoded.email !== email) {
+ 
+      if (req.decoded.email !== email) 
         return res
           .status(403)
           .send({ message: "Forbidden access Your Email Is Not Valid" });
-      }
+      
       next();
     };
 
@@ -84,7 +83,7 @@ async function run() {
         const result = await bannerCollection.insertOne(bannerData);
         res.send(result);
       } catch (error) {
-        console.error("Error inserting banner:", error);
+  
         res.status(500).send({ message: error.message });
       }
     });
@@ -94,7 +93,7 @@ async function run() {
         const result = await bannerCollection.find().toArray();
         res.send(result);
       } catch (error) {
-        console.error("Error fetching banners:", error);
+ 
         res.status(500).send({ message: error.message });
       }
     });
@@ -114,7 +113,7 @@ async function run() {
           res.status(200).send("Document updated successfully Alhamdulillah");
         }
       } catch (error) {
-        console.error("Error updating banner:", error);
+         
         res.status(500).send({ message: error.message });
       }
     });
@@ -130,7 +129,7 @@ async function run() {
             .send({ message: "No active banner found no probleme " });
         }
       } catch (error) {
-        console.error("Error fetching active banner try agin:", error);
+ 
         res.status(500).send({
           message: "An error occurred while fetching the active banner",
         });
@@ -159,7 +158,7 @@ async function run() {
     // update test  single data
 
     app.patch("/updatetest/:id", async (req, res) => {
-      console.log("update method is now hitting");
+    
       const id = req.params.id;
       const updateTestInfo = req.body;
       const filter = { _id: new ObjectId(id) };
@@ -274,7 +273,8 @@ async function run() {
           return res.status(500).send("Field addition failed");
         }
       } catch (err) {
-        console.error("Error updating document", err);
+    
+
         res.status(500).send("Internal Server Error");
       }
     });
