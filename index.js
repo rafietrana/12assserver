@@ -1,13 +1,21 @@
 const express = require("express");
 const app = express();
 const cors = require("cors");
-var jwt = require("jsonwebtoken");
+const jwt = require("jsonwebtoken");
 require("dotenv").config();
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const port = process.env.PORT || 5000;
 
 // middleware
-app.use(cors());
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "https://my-ass-12-1aa68.web.app",
+      "https://my-ass-12-1aa68.firebaseapp.com",
+    ],
+  })
+);
 app.use(express.json());
 
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
@@ -23,7 +31,7 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
-    await client.connect();
+    // await client.connect();
     const bannerCollection = client.db("LastDB").collection("banners");
     const testCollection = client.db("LastDB").collection("tests");
     const reserveCollcetion = client.db("LastDB").collection("reserve");
@@ -32,7 +40,7 @@ async function run() {
     app.post("/jwt", async (req, res) => {
       const user = req.body;
       const token = jwt.sign(user, process.env.ACCES_TOKEN_SECRET, {
-        expiresIn: "1h",
+        expiresIn: "45h",
       });
       res.send({ token });
     });
@@ -40,24 +48,32 @@ async function run() {
     // this is middleware
 
     const verifyToken = (req, res, next) => {
-      console.log("alhamdulillah token is", req.headers);
+      // console.log("alhamdulillah token is", req.headers.authorization);
       if (!req.headers.authorization) {
-        return res.status(401).send({ message: "forbidden access" });
+        return res
+          .status(401)
+          .send({ message: "i not fond token unothorize access" });
       }
 
       const toekenId = req.headers.authorization.split(" ")[1];
-      jwt.verify(toekenId, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+      jwt.verify(toekenId, process.env.ACCES_TOKEN_SECRET, (err, decoded) => {
         if (err) {
-          return res.status(401).send({ message: "forbidden access" });
+          return res
+            .status(401)
+            .send({ message: "I cannot verify your code unothorized Access" });
         }
         req.decoded = decoded;
         next();
       });
     };
     const verifyEmail = (req, res, next) => {
-      const email = req.params.email || req.body.email;
+      const email = req.params.email || req.body.email || req.query.email;
+      // console.log("alhamdulillah decoded email is", req.decoded.email);
+      // console.log("alhamdulillah user email is", email);
       if (req.decoded.email !== email) {
-        return res.status(403).send({ message: "Forbidden access" });
+        return res
+          .status(403)
+          .send({ message: "Forbidden access Your Email Is Not Valid" });
       }
       next();
     };
@@ -73,7 +89,7 @@ async function run() {
       }
     });
 
-    app.get("/getbanner", async (req, res) => {
+    app.get("/getbanner", verifyToken, verifyEmail, async (req, res) => {
       try {
         const result = await bannerCollection.find().toArray();
         res.send(result);
@@ -170,7 +186,7 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/gettestall", async (req, res) => {
+    app.get("/gettestall", verifyToken, verifyEmail, async (req, res) => {
       try {
         const page = parseInt(req.query.page) || 0;
         const size = parseInt(req.query.size) || 2;
@@ -335,7 +351,7 @@ async function run() {
       const result = await userCollection.insertOne(singupInfo);
       res.send(result);
     });
-    // getuserinformation
+
     app.get(
       "/getuserinfo/:email",
       verifyToken,
@@ -467,7 +483,14 @@ async function run() {
       res.send(result);
     });
 
-    await client.db("admin").command({ ping: 1 });
+    app.get("/singlereserve/:testid", async (req, res) => {
+      const testids = req.params.testid;
+      const query = { testId: testids };
+      const result = await reserveCollcetion.find(query).toArray();
+      res.send(result);
+    });
+
+    // await client.db("admin").command({ ping: 1 });
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!"
     );
