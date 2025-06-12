@@ -6,7 +6,6 @@ require("dotenv").config();
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const port = process.env.PORT || 5000;
 
-
 app.use(
   cors({
     origin: [
@@ -31,11 +30,11 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
- 
     const bannerCollection = client.db("LastDB").collection("banners");
     const testCollection = client.db("LastDB").collection("tests");
     const reserveCollcetion = client.db("LastDB").collection("reserve");
     const userCollection = client.db("LastDB").collection("users");
+    const productCollection = client.db("LastDB").collection("productData");
     // jwt start
     app.post("/jwt", async (req, res) => {
       const user = req.body;
@@ -48,7 +47,6 @@ async function run() {
     // this is middleware
 
     const verifyToken = (req, res, next) => {
-    
       if (!req.headers.authorization) {
         return res
           .status(401)
@@ -68,12 +66,12 @@ async function run() {
     };
     const verifyEmail = (req, res, next) => {
       const email = req.params.email || req.body.email || req.query.email;
- 
-      if (req.decoded.email !== email) 
+
+      if (req.decoded.email !== email)
         return res
           .status(403)
           .send({ message: "Forbidden access Your Email Is Not Valid" });
-      
+
       next();
     };
 
@@ -83,7 +81,6 @@ async function run() {
         const result = await bannerCollection.insertOne(bannerData);
         res.send(result);
       } catch (error) {
-  
         res.status(500).send({ message: error.message });
       }
     });
@@ -93,10 +90,55 @@ async function run() {
         const result = await bannerCollection.find().toArray();
         res.send(result);
       } catch (error) {
- 
         res.status(500).send({ message: error.message });
       }
     });
+
+    // post Product data  on mongodb
+
+    app.post("/postProducts", async (req, res) => {
+      const productData = req?.body;
+      try {
+        const result = await productCollection.insertOne(productData);
+        res.send(result);
+      } catch (error) {
+        res
+          .status(500)
+          .send({ message: `i have found an error this error is:${error}` });
+      }
+    });
+
+
+    // get productdata on mongodb
+    app.get("/getProducts", async(req,res)=>{
+      try{
+           const result = await productCollection.find().toArray();
+           res.send(result)
+      }catch(error){
+        res.status(500).send(error)
+      }
+
+    })
+
+
+    // getOne Product Data from mongodb
+
+  app.get("/getOneProduct/:id", async (req, res) => {
+  try {
+    const id = req.params.id;
+    const query = { _id: new ObjectId(id) };
+    const result = await productCollection.findOne(query);
+
+    if (!result) {
+      return res.status(404).send({ message: "Product not found" });
+    }
+
+    res.send(result);
+  } catch (error) {
+    res.status(500).send({ message: "Server error", error: error.message });
+  }
+});
+
 
     app.put("/updateisactive/:id", async (req, res) => {
       const id = req.params.id;
@@ -113,7 +155,6 @@ async function run() {
           res.status(200).send("Document updated successfully Alhamdulillah");
         }
       } catch (error) {
-         
         res.status(500).send({ message: error.message });
       }
     });
@@ -129,7 +170,6 @@ async function run() {
             .send({ message: "No active banner found no probleme " });
         }
       } catch (error) {
- 
         res.status(500).send({
           message: "An error occurred while fetching the active banner",
         });
@@ -158,7 +198,6 @@ async function run() {
     // update test  single data
 
     app.patch("/updatetest/:id", async (req, res) => {
-    
       const id = req.params.id;
       const updateTestInfo = req.body;
       const filter = { _id: new ObjectId(id) };
@@ -273,8 +312,6 @@ async function run() {
           return res.status(500).send("Field addition failed");
         }
       } catch (err) {
-    
-
         res.status(500).send("Internal Server Error");
       }
     });
