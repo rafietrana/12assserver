@@ -321,7 +321,7 @@ async function run() {
       const query = { _id: new ObjectId(id) };
       const result = await reserveCollcetion.deleteOne(query);
       res.send(result);
-    });
+          });
 
     // alhamdulillah payment intent start
     app.post("/create-payment-intent", async (req, res) => {
