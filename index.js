@@ -35,6 +35,9 @@ async function run() {
     const reserveCollcetion = client.db("LastDB").collection("reserve");
     const userCollection = client.db("LastDB").collection("users");
     const productCollection = client.db("LastDB").collection("productData");
+    const paymentCollection = client
+      .db("LastDB")
+      .collection("paymentInformation");
     // jwt start
     app.post("/jwt", async (req, res) => {
       const user = req.body;
@@ -108,37 +111,74 @@ async function run() {
       }
     });
 
-
     // get productdata on mongodb
-    app.get("/getProducts", async(req,res)=>{
-      try{
-           const result = await productCollection.find().toArray();
-           res.send(result)
-      }catch(error){
-        res.status(500).send(error)
+    app.get("/getProducts", async (req, res) => {
+      try {
+        const result = await productCollection.find().toArray();
+        res.send(result);
+      } catch (error) {
+        res.status(500).send(error);
       }
-
-    })
-
+    });
 
     // getOne Product Data from mongodb
 
-  app.get("/getOneProduct/:id", async (req, res) => {
-  try {
-    const id = req.params.id;
-    const query = { _id: new ObjectId(id) };
-    const result = await productCollection.findOne(query);
+    app.get("/getOneProduct/:id", async (req, res) => {
+      try {
+        const id = req.params.id;
+        const query = { _id: new ObjectId(id) };
+        const result = await productCollection.findOne(query);
 
-    if (!result) {
-      return res.status(404).send({ message: "Product not found" });
-    }
+        if (!result) {
+          return res.status(404).send({ message: "Product not found" });
+        }
 
-    res.send(result);
-  } catch (error) {
-    res.status(500).send({ message: "Server error", error: error.message });
-  }
-});
+        res.send(result);
+      } catch (error) {
+        res.status(500).send({ message: "Server error", error: error.message });
+      }
+    });
 
+    // update product stock quality when data sucessfully pay
+
+    app.patch("/updateProductStock", async (req, res) => {
+      const { productId, quantity } = req.body;
+      if (!productId || !quantity) {
+        return res
+          .status(400)
+          .send({ success: false, message: "Missing productId or quantity" });
+      }
+
+      try {
+        const query = { _id: new ObjectId(productId) };
+
+        const updateDoc = { $inc: { stock: -parseInt(quantity) } };
+
+        const result = await productCollection.updateOne(query, updateDoc);
+
+        res.send(result);
+      } catch (err) {
+        // $&
+
+        res.status(500).send({
+          success: false,
+          message: "Internal server error",
+          error: err.message,
+        });
+      }
+    });
+
+    // post clintInformation after sucessfully pay payment
+
+    app.post("/postPaymentInformation", async (req, res) => {
+      const { clientInformationData } = req.body;
+      // $&
+
+      const result = await paymentCollection.insertOne(clientInformationData);
+      // $&
+
+      res.send(result);
+    });
 
     app.put("/updateisactive/:id", async (req, res) => {
       const id = req.params.id;
@@ -321,7 +361,7 @@ async function run() {
       const query = { _id: new ObjectId(id) };
       const result = await reserveCollcetion.deleteOne(query);
       res.send(result);
-          });
+    });
 
     // alhamdulillah payment intent start
     app.post("/create-payment-intent", async (req, res) => {
@@ -533,7 +573,7 @@ async function run() {
     );
 
     app.listen(port, () => {
-      console.log(`Your port is running on ${port}`);
+      // $&
     });
   } catch (err) {
     console.error("Failed to connect to MongoDB", err);
